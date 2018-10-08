@@ -1,16 +1,8 @@
-
 import tensorflow as tf
-import numpy as np
 
 
 
 class Network(object):
-    """
-    Input to the network is the state, output is the action
-    under a deterministic policy.
-    The output layer activation is a tanh to keep the action
-    between -2 and 2
-    """
 
     def __init__(self, sess, state_size, action_dim, learning_rate, tau, device):
         self.sess = sess
@@ -30,10 +22,7 @@ class Network(object):
 
         self.target_network_params = tf.trainable_variables()[len(self.network_params):]
 
-        # Op for periodically updating target network with online network
-        # weights
         self.update_target_network_params = [self.target_network_params[i].assign(self.network_params[i]) for i in range(len(self.target_network_params))]
-        #self.update_target_network_params = tf.assign(self.target_network_params, self.network_params)
 
         with tf.device(self.device):
 
@@ -43,18 +32,8 @@ class Network(object):
             q_acted = tf.reduce_sum(self.out * action_one_hot, reduction_indices=1, name='q_acted')
             self.delta = tf.subtract(self.target_q_t, q_acted)
             self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
-            #self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate,momentum=0.95, epsilon=0.01)#, 0.99, 0.0, 1e-6)
-            #self.l2_loss = 0.01*(tf.nn.l2_loss(self.weights1)) +  0.01*(tf.nn.l2_loss(self.weights2)) + 0.01*(tf.nn.l2_loss(self.weights3))
-
 
             self.optimize = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
-            #self.optimize = self.optimizer.minimize(self.loss)
-            '''
-            self.predicted_q_value = tf.placeholder(tf.float32, [None, self.a_dim])
-            # Define loss and optimization Op
-            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.predicted_q_value,self.out)))
-            self.optimize = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
-            '''
 
         self.num_trainable_vars = len(self.network_params) + len(self.target_network_params)
 
