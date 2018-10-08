@@ -41,7 +41,7 @@ class Network(object):
             self.action = tf.placeholder(tf.int32, [None, 1])
             action_one_hot = tf.one_hot(self.action, self.a_dim, 1.0, 0.0, name='action_one_hot')
             q_acted = tf.reduce_sum(self.out * action_one_hot, reduction_indices=1, name='q_acted')
-            self.delta = self.target_q_t - q_acted
+            self.delta = tf.subtract(self.target_q_t, q_acted)
             self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
             #self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate,momentum=0.95, epsilon=0.01)#, 0.99, 0.0, 1e-6)
             #self.l2_loss = 0.01*(tf.nn.l2_loss(self.weights1)) +  0.01*(tf.nn.l2_loss(self.weights2)) + 0.01*(tf.nn.l2_loss(self.weights3))

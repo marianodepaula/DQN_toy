@@ -4,25 +4,22 @@ import numpy as np
 import time
 from replay_buffer import ReplayBuffer
 from q_network import Network
-from image import imageGrabber
 import gym
-import cv2
-from robots import gym_environment
 
-DEVICE = '/cpu:0'
+DEVICE = '/gpu:0'
 
 # Base learning rate 
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 # Soft target update param
 TAU = 1.
-RANDOM_SEED = 11543521#1234
+RANDOM_SEED = 1234
 EXPLORE = 1000000
 
 
 N_ACTIONS = 4
 SIZE_FRAME = 84
 
-def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, epsilon=1.0, min_epsilon=0.05, BUFFER_SIZE=15000, train_indicator=True, render = True):
+def trainer(epochs=1000, MINIBATCH_SIZE=32, GAMMA = 0.99,save=1, save_image=1, epsilon=1.0, min_epsilon=0.05, BUFFER_SIZE=15000, train_indicator=True, render = True):
     with tf.Session() as sess:
 
         # configuring the random processes
@@ -69,9 +66,9 @@ def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, e
                 print('model saved succesfuly')
                 print('*************************')
             
-            if i%100 == 0: 
+            if i%200 == 0: 
                  agent.update_target_network()
-                 
+                 print('update_target_network')
             
             state = env.reset()
             
@@ -82,7 +79,7 @@ def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, e
             
             while not done:
                 
-                epsilon -= 0.000001
+                epsilon -= 0.00001
                 epsilon = np.maximum(min_epsilon,epsilon)
                 
                 # 1. get action with e greedy
@@ -95,10 +92,11 @@ def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, e
                     # Just stick to what you know bro
                     q0 = agent.predict(np.reshape(state,(1,observation_space)) ) 
                     action = np.argmax(q0)
-                    # print('action', action)
+                    #print('q', q0, 'action', action)
 
                 next_state, reward, done, info = env.step(action)
-                #print('next_state',next_state)
+                reward = np.cos(2*next_state[3])
+                # print('next_state',next_state,'r',reward, round(np.cos(2*next_state[3]),3)) 
                 # env.render()
                                
                 if train_indicator:
@@ -151,7 +149,7 @@ def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, e
             
             print('th',i+1,'Step', step,'Reward:',ep_reward,'epsilon', round(epsilon,3) )
             #print('the reward at the end of the episode,', reward)
-          
+            #time.sleep(5)
                         
 
             
@@ -169,4 +167,4 @@ def trainer(epochs=1000, MINIBATCH_SIZE=64, GAMMA = 0.99,save=1, save_image=1, e
 
 
 if __name__ == '__main__':
-    trainer(epochs=20000 ,save_image = False, epsilon= 0.01, train_indicator = True)
+    trainer(epochs=20000 ,save_image = False, epsilon= 1., train_indicator = True)
