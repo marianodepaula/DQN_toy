@@ -4,11 +4,10 @@ import tensorflow as tf
 
 class Network(object):
 
-    def __init__(self, sess, state_size, action_dim, learning_rate, tau, device):
+    def __init__(self, sess, state_size, action_dim, learning_rate, device):
         self.sess = sess
         self.a_dim = action_dim
         self.learning_rate = learning_rate
-        self.tau = tau
         self.currentState = -1.
         self.device = device
         self.state_size = state_size
@@ -31,9 +30,17 @@ class Network(object):
             action_one_hot = tf.one_hot(self.action, self.a_dim, 1.0, 0.0, name='action_one_hot')
             q_acted = tf.reduce_sum(self.out * action_one_hot, reduction_indices=1, name='q_acted')
             self.delta = tf.subtract(self.target_q_t, q_acted)
+            #self.loss = self.clipped_error(self.delta)
             self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
-
-            self.optimize = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
+            
+            self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
+            gradients = self.optimizer.compute_gradients(self.loss)
+            for i, (grad, var) in enumerate(gradients):
+                if grad is not None:
+                    gradients[i] = (tf.clip_by_norm(grad, 5.), var)
+            self.optimize = self.optimizer.apply_gradients(gradients)
+            
+            #self.optimize = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
 
         self.num_trainable_vars = len(self.network_params) + len(self.target_network_params)
 
