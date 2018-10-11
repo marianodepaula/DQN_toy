@@ -4,14 +4,14 @@ import tensorflow as tf
 
 class Network(object):
 
-    def __init__(self, sess, state_size, action_dim, learning_rate, device):
+    def __init__(self, sess, state_size, action_dim, learning_rate, device, layer_norm= True ):
         self.sess = sess
         self.a_dim = action_dim
         self.learning_rate = learning_rate
         self.currentState = -1.
         self.device = device
         self.state_size = state_size
-        
+        self.layer_norm = layer_norm
         # Q network
         self.inputs, self.out, self.saver = self.create_q_network('q')
         self.network_params = tf.trainable_variables()
@@ -27,9 +27,11 @@ class Network(object):
 
             self.target_q_t = tf.placeholder(tf.float32, [None, self.a_dim], name='target_q')
             self.action = tf.placeholder(tf.int32, [None, 1])
+            # obtain the q scores of the selected action
             action_one_hot = tf.one_hot(self.action, self.a_dim, 1.0, 0.0, name='action_one_hot')
             q_acted = tf.reduce_sum(self.out * action_one_hot, reduction_indices=1, name='q_acted')
-            self.delta = tf.subtract(self.target_q_t, q_acted)
+            
+            self.delta = tf.subtract(tf.stop_gradient(self.target_q_t), q_acted)
             #self.loss = self.clipped_error(self.delta)
             self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
             
@@ -52,8 +54,15 @@ class Network(object):
                 stateInput = tf.placeholder(tf.float32, shape=[None,self.state_size])
                 # fully connected layer
                 # stateInput = tf.to_float(stateInput)
-                fc = tf.contrib.layers.fully_connected(stateInput, 100)
-                fc2 = tf.contrib.layers.fully_connected(fc, 100)
+                fc1 = tf.contrib.layers.fully_connected(stateInput, 100, activation_fn=None)
+                if self.layer_norm:
+                    fc1 = tf.contrib.layers.layer_norm(fc1, center=True, scale=True)
+                fc1 = tf.nn.relu(fc1)
+                fc2 = tf.contrib.layers.fully_connected(fc1, 100, activation_fn=None)
+                # normalization
+                if self.layer_norm:
+                    fc2 = tf.contrib.layers.layer_norm(fc2, center=True, scale=True)
+                fc2 = tf.nn.relu(fc2)
                 out = tf.contrib.layers.fully_connected(fc2, self.a_dim,activation_fn=None)
                 
                

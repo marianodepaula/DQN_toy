@@ -86,6 +86,7 @@ def trainer(epochs=1000, MINIBATCH_SIZE=32, GAMMA = 0.99,save=1, save_image=1, e
                     action = np.argmax(q0)
 
                 next_state, reward, done, info = env.step(action)
+                # img = env.render()
                 # I made a change to the reward
                 reward = np.cos(2*next_state[3])
                                
