@@ -4,7 +4,7 @@ import tensorflow as tf
 
 class Network(object):
 
-    def __init__(self, sess, state_size, action_dim, learning_rate, device, layer_norm= True ):
+    def __init__(self, sess, state_size, action_dim, learning_rate, device, layer_norm=True ):
         self.sess = sess
         self.a_dim = action_dim
         self.learning_rate = learning_rate
@@ -33,8 +33,9 @@ class Network(object):
             
             self.delta = tf.subtract(tf.stop_gradient(self.target_q_t), q_acted)
             #self.loss = self.clipped_error(self.delta)
-            self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
+            # self.loss = tf.reduce_mean(self.clipped_error(self.delta), name='loss')
             
+            self.loss = tf.losses.huber_loss(tf.stop_gradient(self.target_q_t), q_acted, reduction=tf.losses.Reduction.MEAN)
             self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
             gradients = self.optimizer.compute_gradients(self.loss)
             for i, (grad, var) in enumerate(gradients):

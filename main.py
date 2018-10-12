@@ -25,8 +25,9 @@ def trainer(epochs=1000, MINIBATCH_SIZE=32, GAMMA = 0.99,save=1, save_image=1, e
         print('obs ', env.observation_space)
         observation_space = 4
         action_space = 2
+        
         # agent
-        agent = Network(sess,observation_space, action_space,LEARNING_RATE,DEVICE)
+        agent = Network(sess,observation_space, action_space,LEARNING_RATE,DEVICE,layer_norm=False)
         
         # TENSORFLOW init seession
         sess.run(tf.global_variables_initializer())
