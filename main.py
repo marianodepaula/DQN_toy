@@ -6,7 +6,7 @@ from replay_buffer import ReplayBuffer
 from q_network import Network
 import gym
 
-DEVICE = '/gpu:0'
+DEVICE = '/cpu:0'
 
 # Base learning rate 
 LEARNING_RATE = 1e-4
